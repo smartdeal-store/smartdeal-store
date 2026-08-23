@@ -140,7 +140,7 @@ body{font-family:Arial,sans-serif;margin:0;background:#f6f6f8;padding-bottom:70p
 <!-- Video Banner Section -->
 <div class="video-banner-container">
   <video id="bannerVideo" class="video-banner" loop muted playsinline controls preload="metadata">
-    <source src="129159627_1787363965657025.mp4" type="video/mp4">
+    <source src="lv-0-20260823115552_qNJcJmRS.mp4" type="video/mp4">
     Your browser does not support the video tag.
   </video>
 </div>
@@ -271,7 +271,6 @@ function isVideoInViewport() {
   if (!videoElem) return false;
   var rect = videoElem.getBoundingClientRect();
   var windowHeight = window.innerHeight || document.documentElement.clientHeight;
-  // Check if at least 20% of video is inside viewport
   return (rect.top < windowHeight && rect.bottom > 0);
 }
 
@@ -282,7 +281,6 @@ function checkVideoVisibility() {
     if (m.style.display === 'block') isAnyModalOpen = true;
   });
 
-  // Video only plays if NO modal is open AND video is visible in screen viewport
   if (isVideoInViewport() && !isAnyModalOpen) {
     playVideo();
   } else {
