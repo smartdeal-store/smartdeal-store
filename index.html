@@ -139,7 +139,7 @@ body{font-family:Arial,sans-serif;margin:0;background:#f6f6f8;padding-bottom:70p
 
 <!-- Video Banner Section -->
 <div class="video-banner-container">
-  <video class="video-banner" autoplay loop muted playsinline controls preload="metadata">
+  <video id="bannerVideo" class="video-banner" loop muted playsinline controls preload="metadata">
     <source src="129159627_1787363965657025.mp4" type="video/mp4">
     Your browser does not support the video tag.
   </video>
@@ -252,6 +252,29 @@ body{font-family:Arial,sans-serif;margin:0;background:#f6f6f8;padding-bottom:70p
 <script>
 function $(id){ return document.getElementById(id); }
 
+// Video Auto Pause / Play Helper Functions
+function pauseBannerVideo() {
+  var v = $('bannerVideo');
+  if(v && !v.paused) { v.pause(); }
+}
+
+function checkAndPlayBannerVideo() {
+  var v = $('bannerVideo');
+  if(!v) return;
+  // Check if any modal is currently visible
+  var modals = document.querySelectorAll('.modal, .form');
+  var isAnyModalOpen = false;
+  modals.forEach(function(m){
+    if(window.getComputedStyle(m).display !== 'none'){
+      isAnyModalOpen = true;
+    }
+  });
+
+  if(!isAnyModalOpen) {
+    v.play().catch(function(e){ console.log("Autoplay blocked:", e); });
+  }
+}
+
 // Profile Menu Toggle JS
 function toggleProfileMenu(e){
   if(e) e.stopPropagation();
@@ -271,10 +294,14 @@ window.onclick = function(event) {
 }
 
 function openOrders(){
+  pauseBannerVideo();
   $('profileMenu').classList.remove('show-menu');
   $('ordersModal').style.display = 'block';
 }
-function closeOrders(){ $('ordersModal').style.display = 'none'; }
+function closeOrders(){
+  $('ordersModal').style.display = 'none';
+  checkAndPlayBannerVideo();
+}
 
 // Supabase Connection Setup
 const SUPABASE_URL = 'https://qxringdbdxebqousnlmz.supabase.co';
@@ -334,6 +361,7 @@ function render(){
 }
 
 function openD(id){
+  pauseBannerVideo();
   for(var i=0;i<ps.length;i++){if(ps[i].id===id){cur=ps[i];break;}}
   if(!cur) return;
   $('detail').style.display='block';
@@ -407,9 +435,23 @@ function toggleWish(e, id){
   updateWishCount(); render();
 }
 
-function closeD(){ $('detail').style.display='none'; }
-function openWish(){ $('profileMenu').classList.remove('show-menu'); $('wishModal').style.display='block'; renderWishlist(); }
-function closeWish(){ $('wishModal').style.display='none'; }
+function closeD(){
+  $('detail').style.display='none';
+  checkAndPlayBannerVideo();
+}
+
+function openWish(){
+  pauseBannerVideo();
+  $('profileMenu').classList.remove('show-menu');
+  $('wishModal').style.display='block';
+  renderWishlist();
+}
+
+function closeWish(){
+  $('wishModal').style.display='none';
+  checkAndPlayBannerVideo();
+}
+
 function renderWishlist(){
   var w=$('wish-items'); if(!w) return;
   if(!wishlist.length){ w.innerHTML='<div class="empty">No saved products! ❤️</div>'; return; }
@@ -423,8 +465,18 @@ function renderWishlist(){
   w.innerHTML=h;
 }
 
-function openCart(){ $('profileMenu').classList.remove('show-menu'); $('cartModal').style.display='block'; renderCart(); }
-function closeCart(){ $('cartModal').style.display='none'; }
+function openCart(){
+  pauseBannerVideo();
+  $('profileMenu').classList.remove('show-menu');
+  $('cartModal').style.display='block';
+  renderCart();
+}
+
+function closeCart(){
+  $('cartModal').style.display='none';
+  checkAndPlayBannerVideo();
+}
+
 function renderCart(){
   var c=$('cart-items'); if(!c) return;
   if(!cart.length){ c.innerHTML='<div class="empty">Cart is empty!</div>'; $('cart-summary').innerHTML=''; $('cart-checkout-btn').style.display='none'; return; }
@@ -449,7 +501,9 @@ function changeQty(cId, d){
 
 function orderSingleForm(){ orderMode='single'; closeD(); openForm(); }
 function orderCartForm(){ orderMode='cart'; closeCart(); openForm(); }
+
 function openForm(){
+  pauseBannerVideo();
   $('form').style.display='block';
   if(orderMode==='single'){
     var pName = cur.n;
@@ -462,7 +516,11 @@ function openForm(){
     $('order-summary-box').innerHTML='<b>Items:</b><br>'+s+'<b>Total:</b> ₹'+t;
   }
 }
-function closeF(){ $('form').style.display='none'; }
+
+function closeF(){
+  $('form').style.display='none';
+  checkAndPlayBannerVideo();
+}
 
 function placeOrder(){
   var f=['cn','ph','house','area','pin','city','state'], v=[];
@@ -480,12 +538,41 @@ function placeOrder(){
   location.href='https://wa.me/9779703618936?text='+encodeURIComponent(msg);
 }
 
-function openSupport(){ $('supportModal').style.display='block'; }
-function closeSupport(){ $('supportModal').style.display='none'; }
+function openSupport(){
+  pauseBannerVideo();
+  $('supportModal').style.display='block';
+}
+
+function closeSupport(){
+  $('supportModal').style.display='none';
+  checkAndPlayBannerVideo();
+}
+
 function contactSupportWhatsApp(){ location.href='https://wa.me/9779703618936?text='+encodeURIComponent("Help needed"); }
 
+// Intersection Observer: Scroll par video visible rahne par hi play hoga
+function initScrollVideoObserver(){
+  var video = $('bannerVideo');
+  if(!video) return;
+
+  var observer = new IntersectionObserver(function(entries) {
+    entries.forEach(function(entry) {
+      if (entry.isIntersecting) {
+        checkAndPlayBannerVideo();
+      } else {
+        pauseBannerVideo();
+      }
+    });
+  }, { threshold: 0.5 }); // Jab kam se kam 50% video screen par ho tabhi chalega
+
+  observer.observe(video);
+}
+
 // Init page load
-document.addEventListener('DOMContentLoaded', fetchProductsFromSupabase);
+document.addEventListener('DOMContentLoaded', function(){
+  fetchProductsFromSupabase();
+  initScrollVideoObserver();
+});
 </script>
 </body>
 </html>
