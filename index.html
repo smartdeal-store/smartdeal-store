@@ -63,7 +63,22 @@ body{font-family:Arial,sans-serif;margin:0;background:#f6f6f8;padding-bottom:70p
 }
 .show-menu { display: block; }
 
-.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:2px;background:#ddd;min-height:200px}
+/* Video Banner Section Styling */
+.video-banner-container {
+  width: 100%;
+  padding: 10px 15px 0 15px;
+  box-sizing: border-box;
+}
+.video-banner {
+  width: 100%;
+  max-height: 220px;
+  object-fit: cover;
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  display: block;
+}
+
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:2px;background:#ddd;min-height:200px;margin-top:10px}
 .card{background:#fff;cursor:pointer;display:flex;flex-direction:column;justify-content:space-between}
 .card img{width:100%;aspect-ratio:1;object-fit:contain;background:#fafafa}
 .info{padding:10px}
@@ -108,7 +123,7 @@ body{font-family:Arial,sans-serif;margin:0;background:#f6f6f8;padding-bottom:70p
   <div class="brand">Smart<span>Deal</span> Store</div>
   
   <div class="top-actions">
-    <!-- Sirf Profile Icon -->
+    <!-- Profile Icon -->
     <div class="profile-dropdown-container">
       <button class="profile-btn" onclick="toggleProfileMenu(event)">👤</button>
       <div class="profile-menu" id="profileMenu">
@@ -120,6 +135,15 @@ body{font-family:Arial,sans-serif;margin:0;background:#f6f6f8;padding-bottom:70p
   </div>
 
   <input id="q" class="search" placeholder="🔍 Search products..." oninput="render()">
+</div>
+
+<!-- Video Banner Section -->
+<div class="video-banner-container">
+  <video class="video-banner" autoplay loop muted playsinline controls>
+    <!-- Yahan apni GitHub Uploaded Video ka Link daalein -->
+    <source src="banner.mp4" type="video/mp4">
+    Your browser does not support the video tag.
+  </video>
 </div>
 
 <!-- Grid -->
