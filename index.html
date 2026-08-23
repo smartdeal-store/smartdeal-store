@@ -252,26 +252,41 @@ body{font-family:Arial,sans-serif;margin:0;background:#f6f6f8;padding-bottom:70p
 <script>
 function $(id){ return document.getElementById(id); }
 
-// Video Auto Pause / Play Helper Functions
-function pauseBannerVideo() {
+// Video Control Helpers
+function pauseVideo() {
   var v = $('bannerVideo');
-  if(v && !v.paused) { v.pause(); }
+  if (v && !v.paused) { v.pause(); }
 }
 
-function checkAndPlayBannerVideo() {
+function playVideo() {
   var v = $('bannerVideo');
-  if(!v) return;
-  // Check if any modal is currently visible
+  if (v && v.paused) {
+    v.play().catch(function(e){});
+  }
+}
+
+// Check real visibility in screen viewport
+function isVideoInViewport() {
+  var videoElem = $('bannerVideo');
+  if (!videoElem) return false;
+  var rect = videoElem.getBoundingClientRect();
+  var windowHeight = window.innerHeight || document.documentElement.clientHeight;
+  // Check if at least 20% of video is inside viewport
+  return (rect.top < windowHeight && rect.bottom > 0);
+}
+
+function checkVideoVisibility() {
   var modals = document.querySelectorAll('.modal, .form');
   var isAnyModalOpen = false;
-  modals.forEach(function(m){
-    if(window.getComputedStyle(m).display !== 'none'){
-      isAnyModalOpen = true;
-    }
+  modals.forEach(function(m) {
+    if (m.style.display === 'block') isAnyModalOpen = true;
   });
 
-  if(!isAnyModalOpen) {
-    v.play().catch(function(e){ console.log("Autoplay blocked:", e); });
+  // Video only plays if NO modal is open AND video is visible in screen viewport
+  if (isVideoInViewport() && !isAnyModalOpen) {
+    playVideo();
+  } else {
+    pauseVideo();
   }
 }
 
@@ -294,13 +309,13 @@ window.onclick = function(event) {
 }
 
 function openOrders(){
-  pauseBannerVideo();
+  pauseVideo();
   $('profileMenu').classList.remove('show-menu');
   $('ordersModal').style.display = 'block';
 }
 function closeOrders(){
   $('ordersModal').style.display = 'none';
-  checkAndPlayBannerVideo();
+  checkVideoVisibility();
 }
 
 // Supabase Connection Setup
@@ -361,7 +376,7 @@ function render(){
 }
 
 function openD(id){
-  pauseBannerVideo();
+  pauseVideo();
   for(var i=0;i<ps.length;i++){if(ps[i].id===id){cur=ps[i];break;}}
   if(!cur) return;
   $('detail').style.display='block';
@@ -435,22 +450,9 @@ function toggleWish(e, id){
   updateWishCount(); render();
 }
 
-function closeD(){
-  $('detail').style.display='none';
-  checkAndPlayBannerVideo();
-}
-
-function openWish(){
-  pauseBannerVideo();
-  $('profileMenu').classList.remove('show-menu');
-  $('wishModal').style.display='block';
-  renderWishlist();
-}
-
-function closeWish(){
-  $('wishModal').style.display='none';
-  checkAndPlayBannerVideo();
-}
+function closeD(){ $('detail').style.display='none'; checkVideoVisibility(); }
+function openWish(){ pauseVideo(); $('profileMenu').classList.remove('show-menu'); $('wishModal').style.display='block'; renderWishlist(); }
+function closeWish(){ $('wishModal').style.display='none'; checkVideoVisibility(); }
 
 function renderWishlist(){
   var w=$('wish-items'); if(!w) return;
@@ -465,17 +467,8 @@ function renderWishlist(){
   w.innerHTML=h;
 }
 
-function openCart(){
-  pauseBannerVideo();
-  $('profileMenu').classList.remove('show-menu');
-  $('cartModal').style.display='block';
-  renderCart();
-}
-
-function closeCart(){
-  $('cartModal').style.display='none';
-  checkAndPlayBannerVideo();
-}
+function openCart(){ pauseVideo(); $('profileMenu').classList.remove('show-menu'); $('cartModal').style.display='block'; renderCart(); }
+function closeCart(){ $('cartModal').style.display='none'; checkVideoVisibility(); }
 
 function renderCart(){
   var c=$('cart-items'); if(!c) return;
@@ -503,7 +496,7 @@ function orderSingleForm(){ orderMode='single'; closeD(); openForm(); }
 function orderCartForm(){ orderMode='cart'; closeCart(); openForm(); }
 
 function openForm(){
-  pauseBannerVideo();
+  pauseVideo();
   $('form').style.display='block';
   if(orderMode==='single'){
     var pName = cur.n;
@@ -516,11 +509,7 @@ function openForm(){
     $('order-summary-box').innerHTML='<b>Items:</b><br>'+s+'<b>Total:</b> ₹'+t;
   }
 }
-
-function closeF(){
-  $('form').style.display='none';
-  checkAndPlayBannerVideo();
-}
+function closeF(){ $('form').style.display='none'; checkVideoVisibility(); }
 
 function placeOrder(){
   var f=['cn','ph','house','area','pin','city','state'], v=[];
@@ -538,40 +527,26 @@ function placeOrder(){
   location.href='https://wa.me/9779703618936?text='+encodeURIComponent(msg);
 }
 
-function openSupport(){
-  pauseBannerVideo();
-  $('supportModal').style.display='block';
-}
-
-function closeSupport(){
-  $('supportModal').style.display='none';
-  checkAndPlayBannerVideo();
-}
-
+function openSupport(){ pauseVideo(); $('supportModal').style.display='block'; }
+function closeSupport(){ $('supportModal').style.display='none'; checkVideoVisibility(); }
 function contactSupportWhatsApp(){ location.href='https://wa.me/9779703618936?text='+encodeURIComponent("Help needed"); }
 
-// Intersection Observer: Scroll par video visible rahne par hi play hoga
-function initScrollVideoObserver(){
-  var video = $('bannerVideo');
-  if(!video) return;
+function setupScrollVideoObserver() {
+  var videoElem = $('bannerVideo');
+  if (!videoElem) return;
 
   var observer = new IntersectionObserver(function(entries) {
-    entries.forEach(function(entry) {
-      if (entry.isIntersecting) {
-        checkAndPlayBannerVideo();
-      } else {
-        pauseBannerVideo();
-      }
-    });
-  }, { threshold: 0.5 }); // Jab kam se kam 50% video screen par ho tabhi chalega
+    checkVideoVisibility();
+  }, { threshold: 0.2 });
 
-  observer.observe(video);
+  observer.observe(videoElem);
+  window.addEventListener('scroll', checkVideoVisibility);
 }
 
 // Init page load
 document.addEventListener('DOMContentLoaded', function(){
   fetchProductsFromSupabase();
-  initScrollVideoObserver();
+  setupScrollVideoObserver();
 });
 </script>
 </body>
