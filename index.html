@@ -15,6 +15,56 @@ body{font-family:Arial,sans-serif;margin:0;background:#f6f6f8;padding-bottom:70p
 .wish-badge{background:#d81b60;color:#fff;border-radius:50%;padding:2px 7px;font-size:12px}
 .search{width:100%;box-sizing:border-box;padding:10px 12px;margin-top:10px;border:1px solid #ddd;border-radius:10px}
 
+/* Profile Dropdown Styling */
+.profile-dropdown-container {
+  position: relative;
+  display: inline-block;
+}
+.profile-btn {
+  background: #fce4ec;
+  color: #d81b60;
+  border: 1.5px solid #d81b60;
+  width: 35px;
+  height: 35px;
+  border-radius: 50%;
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.profile-menu {
+  display: none;
+  position: absolute;
+  right: 0;
+  top: 42px;
+  background-color: #ffffff;
+  min-width: 160px;
+  box-shadow: 0px 4px 12px rgba(0,0,0,0.15);
+  border-radius: 10px;
+  overflow: hidden;
+  z-index: 1000;
+  border: 1px solid #eee;
+}
+.profile-menu a {
+  color: #333;
+  padding: 12px 14px;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: bold;
+  border-bottom: 1px solid #f5f5f5;
+  transition: background 0.2s;
+}
+.profile-menu a:last-child { border-bottom: none; }
+.profile-menu a:hover {
+  background-color: #fce4ec;
+  color: #d81b60;
+}
+.show-menu { display: block; }
+
 .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:2px;background:#ddd;min-height:200px}
 .card{background:#fff;cursor:pointer;display:flex;flex-direction:column;justify-content:space-between}
 .card img{width:100%;aspect-ratio:1;object-fit:contain;background:#fafafa}
@@ -62,6 +112,16 @@ body{font-family:Arial,sans-serif;margin:0;background:#f6f6f8;padding-bottom:70p
   <div class="top-actions">
     <button class="wish-top-btn" onclick="openWish()">❤️ <span id="wish-count" class="wish-badge">0</span></button>
     <button class="cart-icon-btn" onclick="openCart()">🛒 <span id="cart-count" class="cart-badge">0</span></button>
+    
+    <!-- Profile Dropdown Section -->
+    <div class="profile-dropdown-container">
+      <button class="profile-btn" onclick="toggleProfileMenu(event)">👤</button>
+      <div class="profile-menu" id="profileMenu">
+        <a href="#" onclick="openOrders(); return false;">📦 Your Orders</a>
+        <a href="#" onclick="openCart(); return false;">🛒 Cart</a>
+        <a href="#" onclick="openWish(); return false;">❤️ Favorites</a>
+      </div>
+    </div>
   </div>
 
   <input id="q" class="search" placeholder="🔍 Search products..." oninput="render()">
@@ -123,6 +183,19 @@ body{font-family:Arial,sans-serif;margin:0;background:#f6f6f8;padding-bottom:70p
   </div>
 </div>
 
+<!-- Orders Modal -->
+<div id="ordersModal" class="modal">
+  <button class="back" onclick="closeOrders()">← Back</button>
+  <div class="body">
+    <h2>Your Orders 📦</h2>
+    <div class="support-card" style="background:#e3f2fd;border-left-color:#1e88e5">
+      <h3 style="margin:0 0 5px;color:#1565c0">💡 Track Orders</h3>
+      <p style="margin:0;font-size:14px;color:#0d47a1">Aapke saare orders WhatsApp par process kiye jaate hain. Order details aur tracking update ke liye Support button par click karein.</p>
+    </div>
+    <button class="buy-btn-full" style="background:#25d366" onclick="contactSupportWhatsApp()">💬 Track Order on WhatsApp</button>
+  </div>
+</div>
+
 <!-- Delivery Form Modal -->
 <div id="form" class="form">
   <button class="back" onclick="closeF()">← Back</button>
@@ -160,6 +233,30 @@ body{font-family:Arial,sans-serif;margin:0;background:#f6f6f8;padding-bottom:70p
 
 <script>
 function $(id){ return document.getElementById(id); }
+
+// Profile Menu Toggle JS
+function toggleProfileMenu(e){
+  if(e) e.stopPropagation();
+  $('profileMenu').classList.toggle('show-menu');
+}
+
+window.onclick = function(event) {
+  if (!event.target.matches('.profile-btn')) {
+    var dropdowns = document.getElementsByClassName("profile-menu");
+    for (var i = 0; i < dropdowns.length; i++) {
+      var openDropdown = dropdowns[i];
+      if (openDropdown.classList.contains('show-menu')) {
+        openDropdown.classList.remove('show-menu');
+      }
+    }
+  }
+}
+
+function openOrders(){
+  $('profileMenu').classList.remove('show-menu');
+  $('ordersModal').style.display = 'block';
+}
+function closeOrders(){ $('ordersModal').style.display = 'none'; }
 
 // Supabase Connection Setup
 const SUPABASE_URL = 'https://qxringdbdxebqousnlmz.supabase.co';
@@ -293,7 +390,7 @@ function toggleWish(e, id){
 }
 
 function closeD(){ $('detail').style.display='none'; }
-function openWish(){ $('wishModal').style.display='block'; renderWishlist(); }
+function openWish(){ $('profileMenu').classList.remove('show-menu'); $('wishModal').style.display='block'; renderWishlist(); }
 function closeWish(){ $('wishModal').style.display='none'; }
 function renderWishlist(){
   var w=$('wish-items'); if(!w) return;
@@ -308,7 +405,7 @@ function renderWishlist(){
   w.innerHTML=h;
 }
 
-function openCart(){ $('cartModal').style.display='block'; renderCart(); }
+function openCart(){ $('profileMenu').classList.remove('show-menu'); $('cartModal').style.display='block'; renderCart(); }
 function closeCart(){ $('cartModal').style.display='none'; }
 function renderCart(){
   var c=$('cart-items'); if(!c) return;
