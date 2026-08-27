@@ -38,7 +38,13 @@ body{font-family:Arial,sans-serif;margin:0;background:#f6f6f8;padding-bottom:70p
 .thumbs{display:flex;gap:7px;padding:8px;overflow-x:auto}
 .thumbs img{width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:pointer;border:1px solid #ddd}
 .body{padding:15px}
-.buy-btn-full{width:100%;padding:14px;background:#d81b60;color:#fff;border:0;border-radius:99px;font-size:16px;font-weight:800;cursor:pointer;margin-top:10px}
+.buy-btn-full{width:100%;padding:14px;background:#d81b60;color:#fff;border:0;border-radius:99px;font-size:15px;font-weight:800;cursor:pointer;margin-top:10px}
+
+.detail-header{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:10px}
+.btn-share-icon{background:#007bff;color:#fff;border:none;padding:10px 14px;border-radius:50px;font-weight:bold;cursor:pointer;font-size:14px;display:flex;align-items:center;gap:4px;white-space:nowrap}
+.detail-action-btns{display:flex;gap:10px;margin-top:15px;margin-bottom:15px}
+.btn-cart-toggle{flex:1;padding:12px;background:#f8bbd0;color:#880e4f;border:1.5px solid #d81b60;border-radius:10px;font-weight:bold;cursor:pointer;font-size:13px;text-align:center}
+.btn-buy-now{flex:1;padding:12px;background:#d81b60;color:#fff;border:0;border-radius:10px;font-weight:bold;cursor:pointer;font-size:13px;text-align:center}
 
 .option-box{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 12px}
 .opt-btn{border:1px solid #ccc;background:#fff;padding:8px 12px;border-radius:8px;cursor:pointer;text-align:center;font-size:13px}
@@ -90,8 +96,14 @@ body{font-family:Arial,sans-serif;margin:0;background:#f6f6f8;padding-bottom:70p
   <img id="mi" class="mainimg">
   <div id="thumbs" class="thumbs"></div>
   <div class="body">
-    <h1 id="dn" style="font-size:20px;margin:5px 0"></h1>
-    <div id="dp" class="price" style="color:#d81b60"></div>
+    <!-- Title & Share Button Header -->
+    <div class="detail-header">
+      <div>
+        <h1 id="dn" style="font-size:20px;margin:0 0 5px 0"></h1>
+        <div id="dp" class="price" style="color:#d81b60"></div>
+      </div>
+      <button class="btn-share-icon" onclick="shareProduct()">📤 Share</button>
+    </div>
     
     <div id="flavor-container" style="display:none;margin-top:12px">
       <h4 style="margin:0 0 5px">Select Flavor: <span id="selected-flavor-txt" style="color:#d81b60"></span></h4>
@@ -104,20 +116,17 @@ body{font-family:Arial,sans-serif;margin:0;background:#f6f6f8;padding-bottom:70p
       <div id="size-options" class="option-box"></div>
     </div>
 
+    <!-- Add To Cart (Left/Black Mark) & Buy Now (Right/Red Mark) -->
+    <div class="detail-action-btns">
+      <button id="btn-toggle-cart" class="btn-cart-toggle" onclick="toggleCartCurrent()">ADD TO CART</button>
+      <button class="btn-buy-now" onclick="orderSingleForm()">BUY NOW</button>
+    </div>
+
     <p id="dd" style="white-space:pre-line;color:#444"></p>
     <h3>Product Highlights</h3>
     <p id="df" style="white-space:pre-line;color:#555"></p>
     <h3>Delivery Information</h3>
     <p id="dv" style="white-space:pre-line;color:#555"></p>
-
-    <!-- Buy / Cart Buttons -->
-    <div style="display:flex;gap:10px">
-      <button class="buy-btn-full" style="background:#f8bbd0;color:#880e4f" onclick="addToCartCurrent()">ADD TO CART</button>
-      <button class="buy-btn-full" onclick="orderSingleForm()">BUY NOW</button>
-    </div>
-
-    <!-- Share Product Button (Added) -->
-    <button class="buy-btn-full" style="background:#007bff;margin-top:10px" onclick="shareProduct()">📤 SHARE PRODUCT</button>
   </div>
 </div>
 
@@ -210,6 +219,9 @@ var ps = [], cart = [], wishlist = [];
 try { cart = JSON.parse(localStorage.getItem('sm_cart') || '[]'); } catch(e){}
 try { wishlist = JSON.parse(localStorage.getItem('sm_wish') || '[]'); } catch(e){}
 
+function saveCart(){ try{ localStorage.setItem('sm_cart', JSON.stringify(cart)); }catch(e){} }
+function saveWish(){ try{ localStorage.setItem('sm_wish', JSON.stringify(wishlist)); }catch(e){} }
+
 var cur = null, selectedSize = null, selectedFlavor = null, selectedPrice = null, orderMode = 'single';
 
 async function fetchProductsFromSupabase() {
@@ -222,7 +234,6 @@ async function fetchProductsFromSupabase() {
   ps = data || [];
   render();
 
-  // Auto-open shared product link if present
   var urlParams = new URLSearchParams(window.location.search);
   var sharedId = urlParams.get('product');
   if (sharedId) {
@@ -243,7 +254,8 @@ function render(){
       var isFav = wishlist.indexOf(x.id) !== -1;
       var firstImg = Array.isArray(x.im) ? x.im[0] : (typeof x.im === 'string' && x.im.startsWith('[') ? JSON.parse(x.im)[0] : x.im);
       var hasSizes = x.sizes || x.sz || x.s;
-      html += '<div class="card"><div onclick="openD('+x.id+')"><img src="'+firstImg+'"><div class="info"><b>'+x.n+'</b><div class="price">₹'+x.p+(hasSizes?' onwards':'')+(x.m?' <span class="old">₹'+x.m+'</span>':'')+'</div></div></div><div class="card-btns"><button class="btn-heart '+(isFav?'liked':'')+'" onclick="toggleWish(event,'+x.id+')">'+(isFav?'❤️':'🤍')+'</button><button class="btn-buy" onclick="openD('+x.id+')">+ Add</button></div></div>';
+      // Fixed: "+ Add" button changed to "Buy"
+      html += '<div class="card"><div onclick="openD('+x.id+')"><img src="'+firstImg+'"><div class="info"><b>'+x.n+'</b><div class="price">₹'+x.p+(hasSizes?' onwards':'')+(x.m?' <span class="old">₹'+x.m+'</span>':'')+'</div></div></div><div class="card-btns"><button class="btn-heart '+(isFav?'liked':'')+'" onclick="toggleWish(event,'+x.id+')">'+(isFav?'❤️':'🤍')+'</button><button class="btn-buy" onclick="openD('+x.id+')">Buy</button></div></div>';
     }
   }
   gridEl.innerHTML = html || '<div class="empty">No products found</div>';
@@ -282,6 +294,7 @@ function openD(id){
   } else {
     $('size-container').style.display='none'; selectedSize=null; selectedPrice=cur.p; $('dp').textContent='₹'+cur.p;
   }
+  updateDetailCartButton();
 }
 
 function renderFlavors(){
@@ -292,6 +305,7 @@ function renderFlavors(){
     flHtml+='<div class="opt-btn '+(selectedFlavor===fl?'active':'')+'" onclick="selectFlavor(\''+fl+'\')"><b>'+fl+'</b></div>';
   }
   $('flavor-options').innerHTML=flHtml;
+  updateDetailCartButton();
 }
 function selectFlavor(fl){ selectedFlavor=fl; renderFlavors(); }
 
@@ -303,25 +317,79 @@ function renderSizes(){
     szHtml+='<div class="opt-btn '+(selectedSize===sz.s?'active':'')+'" onclick="selectSize(\''+sz.s+'\','+sz.p+')"><b>'+sz.s+'</b><span>₹'+sz.p+'</span></div>';
   }
   $('size-options').innerHTML=szHtml;
+  updateDetailCartButton();
 }
 function selectSize(s,p){ selectedSize=s; selectedPrice=p; renderSizes(); }
 
-function addToCartCurrent(){
-  var varName = cur.n;
-  if(selectedFlavor) varName += ' (' + selectedFlavor + ')';
-  if(selectedSize) varName += ' [' + selectedSize + ']';
-  var cartId = cur.id + '-' + (selectedFlavor||'') + '-' + (selectedSize||'');
-  var f=false;
-  for(var i=0;i<cart.length;i++){ if(cart[i].cartId===cartId){ cart[i].qty++; f=true; break; } }
-  if(!f){ cart.push({cartId:cartId, id:cur.id, name:varName, price:selectedPrice, qty:1}); }
-  updateCartCount(); alert('Item added to Cart!');
+function getCartIdCurrent(){
+  if(!cur) return '';
+  return cur.id + '-' + (selectedFlavor||'') + '-' + (selectedSize||'');
+}
+
+function updateDetailCartButton(){
+  var btn = $('btn-toggle-cart');
+  if(!btn || !cur) return;
+  var cartId = getCartIdCurrent();
+  var exists = false;
+  for(var i=0; i<cart.length; i++){
+    if(cart[i].cartId === cartId){ exists = true; break; }
+  }
+  if(exists){
+    btn.textContent = 'REMOVE FROM CART';
+    btn.style.background = '#ffebee';
+    btn.style.color = '#c62828';
+    btn.style.borderColor = '#c62828';
+  } else {
+    btn.textContent = 'ADD TO CART';
+    btn.style.background = '#f8bbd0';
+    btn.style.color = '#880e4f';
+    btn.style.borderColor = '#d81b60';
+  }
+}
+
+// Add or Remove directly from Product Detail Modal
+function toggleCartCurrent(){
+  if(!cur) return;
+  var cartId = getCartIdCurrent();
+  var idx = -1;
+  for(var i=0;i<cart.length;i++){
+    if(cart[i].cartId === cartId){ idx = i; break; }
+  }
+
+  if(idx > -1){
+    cart.splice(idx, 1);
+    alert('Item removed from Cart!');
+  } else {
+    var varName = cur.n;
+    if(selectedFlavor) varName += ' (' + selectedFlavor + ')';
+    if(selectedSize) varName += ' [' + selectedSize + ']';
+    cart.push({cartId:cartId, id:cur.id, name:varName, price:selectedPrice, qty:1});
+    alert('Item added to Cart!');
+  }
+  saveCart();
+  updateCartCount();
+  updateDetailCartButton();
 }
 
 function toggleWish(e, id){
   if(e && e.stopPropagation) e.stopPropagation();
   var idx = wishlist.indexOf(id);
   if(idx > -1) wishlist.splice(idx, 1); else wishlist.push(id);
-  updateWishCount(); render();
+  saveWish();
+  updateWishCount(); 
+  render();
+  if($('wishModal').style.display === 'block') renderWishlist();
+}
+
+function removeFromWishlist(id){
+  var idx = wishlist.indexOf(id);
+  if(idx > -1){
+    wishlist.splice(idx, 1);
+    saveWish();
+    updateWishCount();
+    render();
+    renderWishlist();
+  }
 }
 
 function closeD(){ $('detail').style.display='none'; checkVideoVisibility(); }
@@ -335,7 +403,7 @@ function renderWishlist(){
   for(var i=0;i<ps.length;i++){
     if(wishlist.indexOf(ps[i].id)!==-1){
       var firstImg = Array.isArray(ps[i].im) ? ps[i].im[0] : ps[i].im;
-      h+='<div class="cart-item"><img src="'+firstImg+'" style="width:50px;height:50px;object-fit:contain"><div style="flex:1;margin-left:10px"><b>'+ps[i].n+'</b><br>₹'+ps[i].p+'</div><button class="btn-buy" onclick="closeWish();openD('+ps[i].id+')">View</button></div>';
+      h+='<div class="cart-item"><img src="'+firstImg+'" style="width:50px;height:50px;object-fit:contain"><div style="flex:1;margin-left:10px"><b>'+ps[i].n+'</b><br>₹'+ps[i].p+'</div><div style="display:flex;gap:5px"><button class="btn-buy" onclick="closeWish();openD('+ps[i].id+')">Buy</button><button style="background:#ffcdd2;color:#b71c1c;border:none;padding:6px 10px;border-radius:6px;cursor:pointer;font-weight:bold" onclick="removeFromWishlist('+ps[i].id+')">🗑️</button></div></div>';
     }
   }
   w.innerHTML=h;
@@ -359,7 +427,10 @@ function changeQty(cId, d){
   for(var i=0;i<cart.length;i++){
     if(cart[i].cartId===cId){ cart[i].qty+=d; if(cart[i].qty<=0) cart.splice(i,1); break; }
   }
-  updateCartCount(); renderCart();
+  saveCart();
+  updateCartCount(); 
+  renderCart();
+  if($('detail').style.display === 'block') updateDetailCartButton();
 }
 
 function orderSingleForm(){ orderMode='single'; closeD(); openForm(); }
@@ -398,7 +469,6 @@ function openSupport(){ pauseVideo(); $('supportModal').style.display='block'; }
 function closeSupport(){ $('supportModal').style.display='none'; checkVideoVisibility(); }
 function contactSupportWhatsApp(){ location.href='https://wa.me/9779703618936?text='+encodeURIComponent("Help needed"); }
 
-// Native Share Function (WhatsApp, Instagram, Facebook, Copy Link)
 function shareProduct() {
   if (!cur) return;
   var currentPrice = selectedPrice || cur.p;
