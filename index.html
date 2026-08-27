@@ -109,10 +109,15 @@ body{font-family:Arial,sans-serif;margin:0;background:#f6f6f8;padding-bottom:70p
     <p id="df" style="white-space:pre-line;color:#555"></p>
     <h3>Delivery Information</h3>
     <p id="dv" style="white-space:pre-line;color:#555"></p>
+
+    <!-- Buy / Cart Buttons -->
     <div style="display:flex;gap:10px">
       <button class="buy-btn-full" style="background:#f8bbd0;color:#880e4f" onclick="addToCartCurrent()">ADD TO CART</button>
       <button class="buy-btn-full" onclick="orderSingleForm()">BUY NOW</button>
     </div>
+
+    <!-- Share Product Button (Added) -->
+    <button class="buy-btn-full" style="background:#007bff;margin-top:10px" onclick="shareProduct()">📤 SHARE PRODUCT</button>
   </div>
 </div>
 
@@ -216,6 +221,13 @@ async function fetchProductsFromSupabase() {
   }
   ps = data || [];
   render();
+
+  // Auto-open shared product link if present
+  var urlParams = new URLSearchParams(window.location.search);
+  var sharedId = urlParams.get('product');
+  if (sharedId) {
+    openD(parseInt(sharedId));
+  }
 }
 
 function updateCartCount(){ var el = $('cart-count'); if(el){ var t=0; for(var i=0;i<cart.length;i++){t+=cart[i].qty;} el.textContent=t; } }
@@ -243,7 +255,6 @@ function openD(id){
   for(var i=0;i<ps.length;i++){if(ps[i].id===id){cur=ps[i];break;}}
   if(!cur) return;
 
-  // Supabase fallback size column parser
   var rawSizes = cur.sizes || cur.sz || cur.s;
   var parsedSizes = rawSizes;
   if (typeof rawSizes === 'string') {
@@ -263,7 +274,6 @@ function openD(id){
     selectedFlavor = cur.flavors[0]; renderFlavors();
   } else { $('flavor-container').style.display='none'; selectedFlavor = null; }
 
-  // Size option render logic
   if(parsedSizes && parsedSizes.length){
     cur.sizes = parsedSizes;
     $('size-container').style.display='block';
@@ -387,6 +397,27 @@ function placeOrder(){
 function openSupport(){ pauseVideo(); $('supportModal').style.display='block'; }
 function closeSupport(){ $('supportModal').style.display='none'; checkVideoVisibility(); }
 function contactSupportWhatsApp(){ location.href='https://wa.me/9779703618936?text='+encodeURIComponent("Help needed"); }
+
+// Native Share Function (WhatsApp, Instagram, Facebook, Copy Link)
+function shareProduct() {
+  if (!cur) return;
+  var currentPrice = selectedPrice || cur.p;
+  var productUrl = window.location.origin + window.location.pathname + '?product=' + cur.id;
+
+  var shareData = {
+    title: cur.n,
+    text: 'Dekhiye ' + cur.n + ' sirf ₹' + currentPrice + ' mein SmartDeal Store par!',
+    url: productUrl
+  };
+
+  if (navigator.share) {
+    navigator.share(shareData).catch(function(e){});
+  } else {
+    navigator.clipboard.writeText(productUrl).then(function() {
+      alert('Product link copied to clipboard! 📋');
+    });
+  }
+}
 
 document.addEventListener('DOMContentLoaded', function(){ fetchProductsFromSupabase(); });
 </script>
