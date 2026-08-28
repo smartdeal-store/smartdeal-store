@@ -254,7 +254,6 @@ function render(){
       var isFav = wishlist.indexOf(x.id) !== -1;
       var firstImg = Array.isArray(x.im) ? x.im[0] : (typeof x.im === 'string' && x.im.startsWith('[') ? JSON.parse(x.im)[0] : x.im);
       var hasSizes = x.sizes || x.sz || x.s;
-      // Fixed: "+ Add" button changed to "Buy"
       html += '<div class="card"><div onclick="openD('+x.id+')"><img src="'+firstImg+'"><div class="info"><b>'+x.n+'</b><div class="price">₹'+x.p+(hasSizes?' onwards':'')+(x.m?' <span class="old">₹'+x.m+'</span>':'')+'</div></div></div><div class="card-btns"><button class="btn-heart '+(isFav?'liked':'')+'" onclick="toggleWish(event,'+x.id+')">'+(isFav?'❤️':'🤍')+'</button><button class="btn-buy" onclick="openD('+x.id+')">Buy</button></div></div>';
     }
   }
@@ -347,7 +346,6 @@ function updateDetailCartButton(){
   }
 }
 
-// Add or Remove directly from Product Detail Modal
 function toggleCartCurrent(){
   if(!cur) return;
   var cartId = getCartIdCurrent();
@@ -469,7 +467,8 @@ function openSupport(){ pauseVideo(); $('supportModal').style.display='block'; }
 function closeSupport(){ $('supportModal').style.display='none'; checkVideoVisibility(); }
 function contactSupportWhatsApp(){ location.href='https://wa.me/9779703618936?text='+encodeURIComponent("Help needed"); }
 
-function shareProduct() {
+// Fixed Share Function (Triggers Mobile Native App Selection Menu)
+async function shareProduct() {
   if (!cur) return;
   var currentPrice = selectedPrice || cur.p;
   var productUrl = window.location.origin + window.location.pathname + '?product=' + cur.id;
@@ -480,12 +479,32 @@ function shareProduct() {
     url: productUrl
   };
 
-  if (navigator.share) {
-    navigator.share(shareData).catch(function(e){});
+  if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
+    try {
+      await navigator.share(shareData);
+    } catch (err) {
+      console.log('Share canceled');
+    }
+  } else if (navigator.share) {
+    navigator.share({ title: cur.n, url: productUrl }).catch(function(){ fallbackCopy(productUrl); });
   } else {
-    navigator.clipboard.writeText(productUrl).then(function() {
-      alert('Product link copied to clipboard! 📋');
+    fallbackCopy(productUrl);
+  }
+}
+
+function fallbackCopy(url) {
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(url).then(function() {
+      alert('Product link copied! WhatsApp ya Instagram par paste karke share karein. 📋');
     });
+  } else {
+    var dummy = document.createElement('input');
+    document.body.appendChild(dummy);
+    dummy.value = url;
+    dummy.select();
+    document.execCommand('copy');
+    document.body.removeChild(dummy);
+    alert('Product link copied! 📋');
   }
 }
 
